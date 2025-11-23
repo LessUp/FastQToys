@@ -26,8 +26,8 @@ FilterCommand::~FilterCommand() = default;
 auto FilterCommand::execute(int argc, char* argv[]) -> int {
     cxxopts::Options options(getName(), getDescription());
     options.add_options()
-        ("i,input", "Input FASTQ file", cxxopts::value<std::string>())
-        ("o,output", "Output FASTQ file", cxxopts::value<std::string>())
+        ("i,input", "Input FASTQ file (required)", cxxopts::value<std::string>())
+        ("o,output", "Output FASTQ file (required)", cxxopts::value<std::string>())
         ("t,threads", "Number of threads", cxxopts::value<size_t>()->default_value("1"))
         ("quality-encoding", "Quality encoding offset (33 or 64)", cxxopts::value<int>()->default_value("33"))
         ("min-quality", "Minimum average quality threshold", cxxopts::value<double>())
@@ -50,8 +50,16 @@ auto FilterCommand::execute(int argc, char* argv[]) -> int {
         return 0;
     }
 
+    if (!result.count("input") || !result.count("output")) {
+        std::cerr << "Error: both --input and --output options are required for the filter command."
+                  << std::endl;
+        std::cerr << options.help() << std::endl;
+        return 1;
+    }
+
     m_config->input_file = result["input"].as<std::string>();
     m_config->output_file = result["output"].as<std::string>();
+
     m_config->thread_count = result["threads"].as<size_t>();
 
     m_pipeline->setInput(m_config->input_file);
